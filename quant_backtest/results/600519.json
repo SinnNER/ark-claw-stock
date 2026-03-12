@@ -1,7 +1,7 @@
 {
   "symbol": "600519",
   "company_name": "贵州茅台",
-  "data_range": "20000101 ~ 20260312",
+  "data_range": "20000101 ~ 20260313",
   "strategies": {
     "buy_and_hold": {
       "strategy": "Buy and Hold (买入持有)",

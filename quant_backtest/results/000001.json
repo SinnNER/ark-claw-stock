@@ -1,7 +1,7 @@
 {
   "symbol": "000001",
   "company_name": "平安银行",
-  "data_range": "20000101 ~ 20260312",
+  "data_range": "20000101 ~ 20260313",
   "strategies": {
     "buy_and_hold": {
       "strategy": "Buy and Hold (买入持有)",

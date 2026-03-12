@@ -35,8 +35,8 @@ class BacktestEngine:
         
     def detect_market(self) -> str:
         """自动识别市场"""
-        if self.market != "auto":
-            return self.market
+        if self.market and self.market.lower() != "auto":
+            return self.market.lower()
         
         # 根据代码判断
         if self.symbol.isdigit():
@@ -96,6 +96,10 @@ class BacktestEngine:
             
             df['Date'] = pd.to_datetime(df['Date'])
             df = df.sort_values('Date')
+            
+            # 过滤零值和异常数据
+            df = df[df['Close'] > 0]
+            
             self.data = df
             
             # 获取公司名称
@@ -353,7 +357,7 @@ class BacktestEngine:
             date_str = row['Date'].strftime('%Y-%m-%d')
             
             # 定期买入
-            if idx >= invest_idx and total_invested < INITIAL_CAPITAL * 10:  # 限制最大投入
+            if idx >= invest_idx and total_invested < INITIAL_CAPITAL * 10 and row['Close'] > 0:  # 限制最大投入
                 shares_bought = amount / row['Close']
                 total_shares += shares_bought
                 total_invested += amount
@@ -435,8 +439,11 @@ class BacktestEngine:
 
 def run_backtest(symbol: str, market: str = "auto") -> Dict:
     """运行单只股票的回测"""
-    engine = BacktestEngine(symbol, market)
-    return engine.run_all_strategies()
+    engine = BacktestEngine(symbol, market, "20000101", "20260313")
+    result = engine.run_all_strategies()
+    # 添加原始数据用于保存
+    result['data'] = engine.data
+    return result
 
 
 def save_results(results: Dict) -> Tuple[str, str]:
@@ -445,10 +452,15 @@ def save_results(results: Dict) -> Tuple[str, str]:
     
     symbol = results.get('symbol', 'unknown')
     
-    # 保存完整JSON
+    # 保存完整JSON（排除DataFrame）
     json_path = os.path.join(OUTPUT_DIR, f"{symbol}.json")
+    save_data = {k: v for k, v in results.items() if k != 'data'}
+    # 转换DataFrame为列表
+    if results.get('data') is not None:
+        save_data['data_rows'] = len(results['data'])
+    
     with open(json_path, 'w', encoding='utf-8') as f:
-        json.dump(results, f, ensure_ascii=False, indent=2)
+        json.dump(save_data, f, ensure_ascii=False, indent=2)
     
     # 生成Markdown报告
     md_path = os.path.join(OUTPUT_DIR, f"{symbol}.md")
